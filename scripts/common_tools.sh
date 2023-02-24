@@ -57,7 +57,7 @@ print_help_env()
 {
     cat << EOF
 Uses the following environment variables for building:
-    PROTOC                 Protocol Buffers compiler. Default is "protoc."
+    PROTOC                 Protocol Buffers compiler. Default is "protoc".
     CMAKE                  CMake executable to use. Default is "cmake".
     CLANG_VERSION_SUFFIX   Clang compilers version suffix. Default is empty.
                            Set e.g. "-8" to use "clang-8" instead of "clang".

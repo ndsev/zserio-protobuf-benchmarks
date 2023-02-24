@@ -362,7 +362,11 @@ Arguments:
     -p, --purge             Purge test build directory.
     -o <dir>, --output-directory <dir>
                             Output directory where tests will be run.
-    -d <dir>                Directory containing datasets.
+    -d <dir>, --datasets-directory <dir>
+                            Directory containing datasets. Optional, default is "datasets" folder
+                            in projet root.
+    -n <num>, --num-iterations <num>
+                            Number of iterations. Optional, default is 100.
     -i <pattern>, --include <pattern>
                             Include benchmarks matching the specified pattern. Can be specified multiple times.
     -x <pattern>, --exclude <pattern>
@@ -423,6 +427,11 @@ parse_arguments()
 
             "-o" | "--output-directory")
                 eval ${SWITCH_OUT_DIR_OUT}="$2"
+                shift 2
+                ;;
+
+            "-d" | "--datasets-directory")
+                eval ${SWITCH_DATASETS_DIR_OUT}="$2"
                 shift 2
                 ;;
 
@@ -582,6 +591,7 @@ main()
 
     # print information
     echo "Benchmarks output directory: ${BENCHMARKS_OUT_DIR}"
+    echo "Datasets directory: ${SWITCH_DATASETS_DIR}"
     echo
 
     run_benchmarks "${PROJECT_ROOT}" "${BENCHMARKS_SRC_DIR}" "${BENCHMARKS_OUT_DIR}" BENCHMARKS[@] \
