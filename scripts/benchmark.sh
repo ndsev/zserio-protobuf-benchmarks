@@ -238,7 +238,7 @@ run_benchmark()
         local TARGET
         for LOG in ${LOGS[@]} ; do
             TARGET="${LOG#"${TEST_OUT_DIR}/cpp/"}"
-            TARGET="${TARGET%%/*}"
+            TARGET="C++ (${TARGET%%/*})"
             RESULTS=($(cat ${LOG}))
             printf "| %-22s | %-22s | %-22s | %10s | %10s | %10s | %10s |\n" \
                     "${BENCHMARK_PROTO}" "${DATASET_FILENAME}" "${TARGET}" \
