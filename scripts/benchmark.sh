@@ -128,6 +128,10 @@ int main(int argc, char* argv[])
     logFile << std::fixed << std::setprecision(3);
     logFile << totalDuration << "ms " << numIterations << " " << stepDuration << "ms " << kbSize << "kB";
 
+    // serialize to binary file for further analysis
+    std::ofstream ofs("${PACKAGE_NAME}.blob", std::ios_base::binary);
+    message.SerializeToOstream(&ofs);
+
     return 0;
 }
 
