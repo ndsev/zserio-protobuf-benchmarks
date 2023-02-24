@@ -1,0 +1,93 @@
+syntax = "proto3";
+
+package carsales;
+
+message CarSales {
+  uint32 numSoldCars = 1;
+  repeated CarSale carSales = 2;
+}
+
+message CarSale {
+  Date date = 1;
+  string storeName = 2;
+  Address store = 3;
+  Car car = 4;
+  uint32 price = 5;
+}
+
+message Date {
+  uint32 day = 1;
+  DayOfWeek dayOfWeek = 2;
+  Month month = 3;
+  uint32 year = 4;
+}
+
+message Address {
+  string street = 1;
+  uint32 streetNumber = 2;
+  string city = 3;
+  uint32 zipCode = 4;
+}
+
+message Car {
+  CarBrand carBrand = 1;
+  Color color = 2;
+  string vin = 3;
+}
+
+enum DayOfWeek {
+  MONDAY = 0;
+  TUESDAY = 1;
+  WEDNESDAY = 2;
+  THURSDAY = 3;
+  FRIDAY = 4;
+  SATURDAY = 5;
+  SUNDAY = 6;
+}
+
+enum Month {
+  JANUARY = 0;
+  FEBRUARY = 1;
+  MARCH = 2;
+  APRIL = 3;
+  MAY = 4;
+  JUNE = 5;
+  JULY = 6;
+  AUGUST = 7;
+  SEPTEMBER = 8;
+  OCTOBER = 9;
+  NOVEMBER = 10;
+  DECEMBER = 11;
+}
+
+enum CarBrand {
+  VOLKSWAGEN = 0;
+  TOYOTA = 1;
+  STELLANTIS = 2;
+  MERCEDES_BENZ = 3;
+  FORD_MOTOR = 4;
+  BMW = 5;
+  HONDA = 6;
+  GENERAL_MOTORS = 7;
+  HYUNDAI = 8;
+  NISSAN = 9;
+  KIA = 10;
+  RENAULT = 11;
+  TESLA = 12;
+  VOLVO = 13;
+  SUZUKI = 14;
+}
+
+enum Color {
+  BLACK = 0;
+  WHITE = 1;
+  RED = 2;
+  GREEN = 3;
+  YELLOW = 4;
+  BLUE = 5;
+  PINK = 6;
+  GRAY = 7;
+  BROWN = 8;
+  ORANGE = 9;
+  PURPLE = 10;
+}
