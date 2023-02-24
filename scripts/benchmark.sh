@@ -199,6 +199,11 @@ cpp_perf_test()
     local CMAKE_ARGS=()
     local CTEST_ARGS=("-V")
     compile_cpp "${PROJECT_ROOT}" "${OUT_DIR}" "${OUT_DIR}" CPP_TARGETS[@] CMAKE_ARGS[@] CTEST_ARGS[@] all
+    if [ $? -ne 0 ] ; then
+        return 1
+    fi
+
+    return 0
 }
 
 # Run a single benchmark with a single dataset.
@@ -238,15 +243,21 @@ run_benchmark()
             return 1
         fi
 
+        local BLOBS=($(${FIND} "${TEST_OUT_DIR}/cpp" -iname "${PACKAGE_NAME}.blob"))
+        local BLOB=${BLOBS[0]} # all blobs are same
+        local ZIP_FILE=${BLOB/%blob/zip}
+        ${ZIP} "${ZIP_FILE}" "${BLOB}" > /dev/null
+        local ZIP_SIZE="$(du --block-size=1000 ${ZIP_FILE} | cut -f1)kB"
+
         local LOGS=($(${FIND} "${TEST_OUT_DIR}/cpp" -iname "PerformanceTest.log"))
         local TARGET
         for LOG in ${LOGS[@]} ; do
             TARGET="${LOG#"${TEST_OUT_DIR}/cpp/"}"
             TARGET="C++ (${TARGET%%/*})"
             RESULTS=($(cat ${LOG}))
-            printf "| %-22s | %-22s | %-22s | %10s | %10s | %10s | %10s |\n" \
+            printf "| %-22s | %-22s | %-22s | %10s | %10s | %10s | %10s | %10s |\n" \
                     "${BENCHMARK_PROTO}" "${DATASET_FILENAME}" "${TARGET}" \
-                    ${RESULTS[0]} ${RESULTS[1]} ${RESULTS[2]} ${RESULTS[3]} >> "${LOG_FILE}"
+                    ${RESULTS[0]} ${RESULTS[1]} ${RESULTS[2]} ${RESULTS[3]} "${ZIP_SIZE}" >> "${LOG_FILE}"
         done
     fi
 
@@ -269,12 +280,14 @@ run_benchmarks()
 
     local LOG_FILE="${BENCHMARKS_OUT_DIR}/benchmarks.log"
     rm -f ${LOG_FILE}
-    printf "| %-22s | %-22s | %-22s | %10s | %10s | %10s | %10s |\n" \
-           "Benchmark" "Dataset" "Target" "Total Time" "Iterations" "Step Time" "Blob Size" >> "${LOG_FILE}"
-    printf "| %-22s | %-22s | %-22s | %10s | %10s | %10s | %10s |\n" \
+    printf "| %-22s | %-22s | %-22s | %10s | %10s | %10s | %10s | %10s |\n" \
+           "Benchmark" "Dataset" "Target" "Total Time" "Iterations" "Step Time" "Blob Size" "Zip Size" >> \
+           "${LOG_FILE}"
+    printf "| %-22s | %-22s | %-22s | %10s | %10s | %10s | %10s | %10s |\n" \
             "$(for i in {1..22} ; do echo -n "-" ; done)" \
             "$(for i in {1..22} ; do echo -n "-" ; done)" \
             "$(for i in {1..22} ; do echo -n "-" ; done)" \
+            "$(for i in {1..10} ; do echo -n "-" ; done)" \
             "$(for i in {1..10} ; do echo -n "-" ; done)" \
             "$(for i in {1..10} ; do echo -n "-" ; done)" \
             "$(for i in {1..10} ; do echo -n "-" ; done)" \

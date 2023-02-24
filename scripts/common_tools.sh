@@ -22,6 +22,12 @@ set_global_common_variables()
         stderr_echo "Cannot find protoc compiler! Set PROTOC environment variable."
         return 1
     fi
+
+    ZIP="${ZIP:-zip}"
+    if [ ! -f "`which "${ZIP}"`" ] ; then
+        stderr_echo "Cannot find zip utility! Set ZIP environment variable."
+        return 1
+    fi
 }
 
 # Set and check global variables for C++ projects.
@@ -58,6 +64,7 @@ print_help_env()
     cat << EOF
 Uses the following environment variables for building:
     PROTOC                 Protocol Buffers compiler. Default is "protoc".
+    ZIP                    Zip utility. Default is "zip".
     CMAKE                  CMake executable to use. Default is "cmake".
     CLANG_VERSION_SUFFIX   Clang compilers version suffix. Default is empty.
                            Set e.g. "-8" to use "clang-8" instead of "clang".
