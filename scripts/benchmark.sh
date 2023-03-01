@@ -177,7 +177,7 @@ EOF
 
 cpp_perf_test()
 {
-    exit_if_argc_ne $# 9
+    exit_if_argc_ne $# 10
     local PROJECT_ROOT="$1"; shift
     local OUT_DIR="$1"; shift
     local BENCHMARK_DIR="$1"; shift
@@ -188,21 +188,24 @@ cpp_perf_test()
     local ROOT_MESSAGE="$1"; shift
     local DATASET="$1"; shift
     local NUM_ITERATIONS="$1"; shift
+    local SWITCH_RUN_ONLY="$1"; shift
 
     local OUT_SRC_DIR="${OUT_DIR}/src"
     mkdir -p "${OUT_SRC_DIR}"
 
-    # generate Protocol Buffers API
-    mkdir "${OUT_SRC_DIR}/gen"
-    ${PROTOC} --cpp_out="${OUT_SRC_DIR}/gen" --proto_path="${BENCHMARK_DIR}" "${BENCHMARK_PROTO}"
-    if [ $? -ne 0 ] ; then
-        stderr_echo "Failed to run Protocol Buffers compiler!"
-        return 1
-    fi
+    if [[ ${SWITCH_RUN_ONLY} == 0 ]] ; then
+        # generate Protocol Buffers API
+        mkdir -p "${OUT_SRC_DIR}/gen"
+        ${PROTOC} --cpp_out="${OUT_SRC_DIR}/gen" --proto_path="${BENCHMARK_DIR}" "${BENCHMARK_PROTO}"
+        if [ $? -ne 0 ] ; then
+            stderr_echo "Failed to run Protocol Buffers compiler!"
+            return 1
+        fi
 
-    # generate source files
-    generate_cpp_files "${PROJECT_ROOT}" "${OUT_SRC_DIR}" "${PACKAGE_NAME}" "${ROOT_MESSAGE}" \
-                       "${DATASET}" ${NUM_ITERATIONS}
+        # generate source files
+        generate_cpp_files "${PROJECT_ROOT}" "${OUT_SRC_DIR}" "${PACKAGE_NAME}" "${ROOT_MESSAGE}" \
+                           "${DATASET}" ${NUM_ITERATIONS}
+    fi
 
     # compile all and test it
     local CMAKE_ARGS=()
@@ -218,7 +221,7 @@ cpp_perf_test()
 # Run a single benchmark with a single dataset.
 run_benchmark()
 {
-    exit_if_argc_ne $# 8
+    exit_if_argc_ne $# 9
     local PROJECT_ROOT="$1"; shift
     local BENCHMARKS_SRC_DIR="$1"; shift
     local BENCHMARKS_OUT_DIR="$1"; shift
@@ -227,6 +230,7 @@ run_benchmark()
     local MSYS_WORKAROUND_TEMP=("${!1}"); shift
     local CPP_TARGETS=("${MSYS_WORKAROUND_TEMP[@]}")
     local NUM_ITERATIONS="$1"; shift
+    local SWITCH_RUN_ONLY="$1"; shift
     local LOG_FILE="$1"; shift
 
     local BENCHMARK_DIR="${BENCHMARK%/*}"
@@ -246,8 +250,8 @@ run_benchmark()
 
     if [[ ${#CPP_TARGETS[@]} != 0 ]] ; then
         cpp_perf_test "${PROJECT_ROOT}" "${TEST_OUT_DIR}/cpp" \
-                      "${BENCHMARKS_SRC_DIR}/${BENCHMARK_DIR}" "${BENCHMARK_PROTO}" \
-                      CPP_TARGETS[@] ${PACKAGE_NAME} ${FIRST_MESSAGE} "${DATASET}" ${NUM_ITERATIONS}
+                      "${BENCHMARKS_SRC_DIR}/${BENCHMARK_DIR}" "${BENCHMARK_PROTO}" CPP_TARGETS[@] \
+                      ${PACKAGE_NAME} ${FIRST_MESSAGE} "${DATASET}" ${NUM_ITERATIONS} ${SWITCH_RUN_ONLY}
         if [ $? -ne 0 ] ; then
             return 1
         fi
@@ -276,7 +280,7 @@ run_benchmark()
 # Run requested benchmarks with all available datasets.
 run_benchmarks()
 {
-    exit_if_argc_ne $# 7
+    exit_if_argc_ne $# 8
     local PROJECT_ROOT="$1"; shift
     local BENCHMARKS_SRC_DIR="$1"; shift
     local BENCHMARKS_OUT_DIR="$1"; shift
@@ -286,6 +290,7 @@ run_benchmarks()
     local MSYS_WORKAROUND_TEMP=("${!1}"); shift
     local CPP_TARGETS=("${MSYS_WORKAROUND_TEMP[@]}")
     local NUM_ITERATIONS="$1"; shift
+    local SWITCH_RUN_ONLY="$1"; shift
 
     local LOG_FILE="${BENCHMARKS_OUT_DIR}/benchmarks.log"
     rm -f ${LOG_FILE}
@@ -310,10 +315,14 @@ run_benchmarks()
     local DATASETS
     for BENCHMARK in ${BENCHMARKS[@]} ; do
         local DATASETS=($(${FIND} "${DATASETS_DIR}/${BENCHMARK%/*}" -iname "*.json" ! -iname "*.schema.*"))
+        if [[ ${#DATASETS[@]} == 0 ]] ; then
+            stderr_echo "No datasets found for the benchmark '${BENCHMARK}'!"
+            return 1
+        fi
 
         for DATASET in ${DATASETS[@]} ; do
             run_benchmark "${PROJECT_ROOT}" "${BENCHMARKS_SRC_DIR}" "${BENCHMARKS_OUT_DIR}" "${BENCHMARK}" \
-                          "${DATASET}" CPP_TARGETS[@] ${NUM_ITERATIONS} ${LOG_FILE}
+                          "${DATASET}" CPP_TARGETS[@] ${NUM_ITERATIONS} ${SWITCH_RUN_ONLY} ${LOG_FILE}
             if [[ $? -ne 0 ]] ; then
                 stderr_echo "Benchmark ${BENCHMARK_DIR} failed!"
                 return 1
@@ -383,6 +392,7 @@ Arguments:
     -h, --help              Show this help.
     -e, --help-env          Show help for enviroment variables.
     -p, --purge             Purge test build directory.
+    -r, --run-only          Run already compiled PerformanceTests again.
     -o <dir>, --output-directory <dir>
                             Output directory where tests will be run.
     -d <dir>, --datasets-directory <dir>
@@ -420,16 +430,18 @@ EOF
 # 3 - Environment help switch is present. Arguments after help switch have not been checked.
 parse_arguments()
 {
-    exit_if_argc_lt $# 6
+    exit_if_argc_lt $# 7
     local PARAM_CPP_TARGET_ARRAY_OUT="$1"; shift
     local SWITCH_OUT_DIR_OUT="$1"; shift
     local SWITCH_DATASETS_DIR_OUT="$1"; shift
     local SWITCH_NUM_ITERATIONS_OUT="$1"; shift
     local SWITCH_BENCHMARKS_PATTERN_ARRAY_OUT="$1"; shift
     local SWITCH_PURGE_OUT="$1"; shift
+    local SWITCH_RUN_ONLY_OUT="$1"; shift
 
     eval ${SWITCH_NUM_ITERATIONS_OUT}=100
     eval ${SWITCH_PURGE_OUT}=0
+    eval ${SWITCH_RUN_ONLY_OUT}=0
 
     local NUM_PARAMS=0
     local PARAM_ARRAY=()
@@ -447,6 +459,11 @@ parse_arguments()
 
             "-p" | "--purge")
                 eval ${SWITCH_PURGE_OUT}=1
+                shift
+                ;;
+
+            "-r" | "--run-only")
+                eval ${SWITCH_RUN_ONLY_OUT}=1
                 shift
                 ;;
 
@@ -557,8 +574,9 @@ main()
     local SWITCH_NUM_ITERATIONS
     local SWITCH_BENCHMARKS_PATTERN_ARRAY=()
     local SWITCH_PURGE
+    local SWITCH_RUN_ONLY
     parse_arguments PARAM_CPP_TARGET_ARRAY SWITCH_OUT_DIR SWITCH_DATASETS_DIR SWITCH_NUM_ITERATIONS \
-                    SWITCH_BENCHMARKS_PATTERN_ARRAY SWITCH_PURGE "$@"
+                    SWITCH_BENCHMARKS_PATTERN_ARRAY SWITCH_PURGE SWITCH_RUN_ONLY "$@"
     local PARSE_RESULT=$?
     if [ ${PARSE_RESULT} -eq 2 ] ; then
         print_help
@@ -620,7 +638,8 @@ main()
     echo
 
     run_benchmarks "${PROJECT_ROOT}" "${BENCHMARKS_SRC_DIR}" "${BENCHMARKS_OUT_DIR}" BENCHMARKS[@] \
-                   "${SWITCH_DATASETS_DIR}" PARAM_CPP_TARGET_ARRAY[@] ${SWITCH_NUM_ITERATIONS}
+                   "${SWITCH_DATASETS_DIR}" PARAM_CPP_TARGET_ARRAY[@] ${SWITCH_NUM_ITERATIONS} \
+                   ${SWITCH_RUN_ONLY}
     if [[ $? -ne 0 ]] ; then
         return 1
     fi
