@@ -7,14 +7,13 @@ generate_cpp_files()
 {
     exit_if_argc_ne $# 6
     local PROJECT_ROOT="$1"; shift
-    local OUT_DIR="$1"; shift
+    local OUT_SRC_DIR="$1"; shift
     local PACKAGE_NAME="$1"; shift
     local ROOT_MESSAGE="$1"; shift
     local INPUT_PATH="$1"; shift
     local NUM_ITERATIONS="$1"; shift
 
-    mkdir -p "${OUT_DIR}/src"
-    cat > "${OUT_DIR}/src/PerformanceTest.cpp" << EOF
+    cat > "${OUT_SRC_DIR}/PerformanceTest.cpp" << EOF
 #include <iomanip>
 #include <fstream>
 #include <sstream>
@@ -142,7 +141,7 @@ EOF
     posix_to_host_path "${PROJECT_ROOT}" HOST_PROJECT_ROOT ${DISABLE_SLASHES_CONVERSION}
     posix_to_host_path "${INPUT_PATH}" HOST_INPUT_PATH ${DISABLE_SLASHES_CONVERSION}
 
-    cat > "${OUT_DIR}/CMakeLists.txt" << EOF
+    cat > "${OUT_SRC_DIR}/CMakeLists.txt" << EOF
 cmake_minimum_required(VERSION 3.1.0)
 project(PerformanceTest)
 
@@ -151,6 +150,9 @@ enable_testing()
 set(PROJECT_ROOT "${HOST_PROJECT_ROOT}" CACHE PATH "")
 set(CMAKE_MODULE_PATH "\${PROJECT_ROOT}/cmake")
 set(INPUT_PATH "${HOST_INPUT_PATH}")
+
+# find Protobuf
+find_package(Protobuf REQUIRED)
 
 # cmake helpers
 include(cmake_utils)
@@ -162,10 +164,12 @@ compiler_set_warnings()
 
 file(GLOB_RECURSE SOURCES RELATIVE "\${CMAKE_CURRENT_SOURCE_DIR}" "gen/*.cc" "gen/*.h")
 
-add_executable(\${PROJECT_NAME} src/PerformanceTest.cpp \${SOURCES})
+add_executable(\${PROJECT_NAME} PerformanceTest.cpp \${SOURCES})
 
-target_include_directories(\${PROJECT_NAME} PUBLIC "\${CMAKE_CURRENT_SOURCE_DIR}/gen")
-target_link_libraries(\${PROJECT_NAME} protobuf)
+target_include_directories(\${PROJECT_NAME} PUBLIC
+        "\${CMAKE_CURRENT_SOURCE_DIR}/gen"
+        "\${PROTOBUF_INCLUDE_DIRS}")
+target_link_libraries(\${PROJECT_NAME} \${PROTOBUF_LIBRARIES})
 
 add_test(NAME PerformanceTest COMMAND \${PROJECT_NAME} \${INPUT_PATH})
 EOF
@@ -185,20 +189,24 @@ cpp_perf_test()
     local DATASET="$1"; shift
     local NUM_ITERATIONS="$1"; shift
 
+    local OUT_SRC_DIR="${OUT_DIR}/src"
+    mkdir -p "${OUT_SRC_DIR}"
+
     # generate Protocol Buffers API
-    mkdir -p "${OUT_DIR}/gen"
-    ${PROTOC} --cpp_out="${OUT_DIR}/gen" --proto_path="${BENCHMARK_DIR}" "${BENCHMARK_PROTO}"
+    mkdir "${OUT_SRC_DIR}/gen"
+    ${PROTOC} --cpp_out="${OUT_SRC_DIR}/gen" --proto_path="${BENCHMARK_DIR}" "${BENCHMARK_PROTO}"
     if [ $? -ne 0 ] ; then
         stderr_echo "Failed to run Protocol Buffers compiler!"
         return 1
     fi
 
-    generate_cpp_files "${PROJECT_ROOT}" "${OUT_DIR}" "${PACKAGE_NAME}" "${ROOT_MESSAGE}" \
+    # generate source files
+    generate_cpp_files "${PROJECT_ROOT}" "${OUT_SRC_DIR}" "${PACKAGE_NAME}" "${ROOT_MESSAGE}" \
                        "${DATASET}" ${NUM_ITERATIONS}
 
     local CMAKE_ARGS=()
     local CTEST_ARGS=("-V")
-    compile_cpp "${PROJECT_ROOT}" "${OUT_DIR}" "${OUT_DIR}" CPP_TARGETS[@] CMAKE_ARGS[@] CTEST_ARGS[@] all
+    compile_cpp "${PROJECT_ROOT}" "${OUT_DIR}" "${OUT_SRC_DIR}" CPP_TARGETS[@] CMAKE_ARGS[@] CTEST_ARGS[@] all
     if [ $? -ne 0 ] ; then
         return 1
     fi
