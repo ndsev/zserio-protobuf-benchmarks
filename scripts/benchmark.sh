@@ -204,9 +204,10 @@ cpp_perf_test()
     generate_cpp_files "${PROJECT_ROOT}" "${OUT_SRC_DIR}" "${PACKAGE_NAME}" "${ROOT_MESSAGE}" \
                        "${DATASET}" ${NUM_ITERATIONS}
 
+    # compile all and test it
     local CMAKE_ARGS=()
     local CTEST_ARGS=("-V")
-    compile_cpp "${PROJECT_ROOT}" "${OUT_DIR}" "${OUT_SRC_DIR}" CPP_TARGETS[@] CMAKE_ARGS[@] CTEST_ARGS[@] all
+    compile_cpp "${PROJECT_ROOT}" "${OUT_DIR}" "${OUT_SRC_DIR}" CPP_TARGETS[@] CMAKE_ARGS[@] CTEST_ARGS[@] "all"
     if [ $? -ne 0 ] ; then
         return 1
     fi
@@ -320,6 +321,7 @@ run_benchmarks()
         done
     done
 
+    echo
     cat "${LOG_FILE}"
 }
 
@@ -399,6 +401,8 @@ Generator can be:
     cpp-linux64-gcc         Generate C++ sources and compile them for for linux64 target (gcc).
     cpp-linux32-clang       Generate C++ sources and compile them for linux32 target (Clang).
     cpp-linux64-clang       Generate C++ sources and compile them for for linux64 target (Clang).
+    cpp-windows64-mingw     Generate C++ sources and compile them for for windows64 target (MinGW64).
+    cpp-windows64-msvc      Generate C++ sources and compile them for for windows64 target (MSVC).
 
 Example:
     $0 cpp-linux64-gcc

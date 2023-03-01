@@ -53,7 +53,14 @@ set_global_cpp_variables()
     # Extra arguments to be passed by CMake to a native build tool
     CMAKE_BUILD_OPTIONS="${CMAKE_BUILD_OPTIONS:-""}"
 
+    # CMake generator for make
     MAKE_CMAKE_GENERATOR="${MAKE_CMAKE_GENERATOR:-Eclipse CDT4 - Unix Makefiles}"
+
+    # CMake generator for MSVC
+    MSVC_CMAKE_GENERATOR="${MSVC_CMAKE_GENERATOR:-Visual Studio 17 2022}"
+
+    # MSVC toolset for CMake
+    MSVC_CMAKE_TOOLSET="${MSVC_CMAKE_TOOLSET:-v120}"
 
     return 0
 }
@@ -73,6 +80,12 @@ Uses the following environment variables for building:
     CTEST                  Ctest executable to use. Default is "ctest".
     MAKE_CMAKE_GENERATOR   CMake generator to use for build using Makefiles. Default is
                            "Eclipse CDT4 - Unix Makefiles".
+    MSVC_CMAKE_GENERATOR   CMake generator to use with MSVC compiler. Default is
+                           "Visual Studio 17 2022". Note that CMake option "-A x64"
+                           is added automatically for windows64-mscv target. 
+    MSVC_CMAKE_TOOLSET     MSVC toolset specification for CMake generator.
+                           Default is "v120". Note that "v120" is for VS 2013,
+                           "v140" is for VS 2015, "v141" is for VS 2017, "v142" is for VS 2019.
 
     Either set these directly, or create 'scripts/build-env.sh' that sets
     these. It's sourced automatically if it exists.
@@ -211,13 +224,13 @@ compile_cpp_for_target()
     local CMAKE_ARGS=("${MSYS_WORKAROUND_TEMP[@]}")
     local MSYS_WORKAROUND_TEMP=("${!1}"); shift
     local CTEST_ARGS=("${MSYS_WORKAROUND_TEMP[@]}")
-    local MAKE_TARGET="$1"; shift
+    local MAKE_BUILD_RULE="$1"; shift
 
+    # check if toolchain-file exist for current platform
     local TOOLCHAIN_FILE="${PROJECT_ROOT}/cmake/toolchain-${TARGET}.cmake"
     CMAKE_ARGS=("--no-warn-unused-cli"
                 "${CMAKE_ARGS[@]}"
-                "-DCMAKE_TOOLCHAIN_FILE=${TOOLCHAIN_FILE}"
-                "-DCMAKE_PREFIX_PATH=${SQLITE_RELEASE_ROOT}/${TARGET}")
+                "-DCMAKE_TOOLCHAIN_FILE=${TOOLCHAIN_FILE}")
 
     # detect build type
     local BUILD_TYPE="Release"
@@ -228,18 +241,19 @@ compile_cpp_for_target()
         BUILD_TYPE_LOWER_CASE="debug"
     fi
 
-    echo "${BUILD_TYPE}"
+    # resolve CMake generator
+    if [[ ${TARGET} == *"-msvc" ]] ; then
+        local CMAKE_GENERATOR="${MSVC_CMAKE_GENERATOR}";
+        local CMAKE_ARGS=("${CMAKE_ARGS[@]}" "-A x64" "-T ${MSVC_CMAKE_TOOLSET}")
+        local CMAKE_BUILD_CONFIG="--config ${BUILD_TYPE}"
+    else
+        local CMAKE_GENERATOR="${MAKE_CMAKE_GENERATOR}"
+        local CMAKE_BUILD_CONFIG=""
+    fi
 
-    BUILD_DIR="${BUILD_DIR}/${BUILD_TYPE_LOWER_CASE}"
-
+    local BUILD_DIR="${BUILD_DIR}/${BUILD_TYPE_LOWER_CASE}"
     mkdir -p "${BUILD_DIR}"
     pushd "${BUILD_DIR}" > /dev/null
-
-    local CMAKE_BUILD_TARGET=${MAKE_TARGET}
-
-    # resolve CMake generator
-    local CMAKE_GENERATOR="${MAKE_CMAKE_GENERATOR}"
-    local CMAKE_BUILD_CONFIG=""
 
     # generate makefile running cmake
     "${CMAKE}" ${CMAKE_EXTRA_ARGS} -G "${CMAKE_GENERATOR}" "${CMAKE_ARGS[@]}" "${CMAKELISTS_DIR}"
@@ -251,7 +265,7 @@ compile_cpp_for_target()
     fi
 
     # build it running cmake
-    "${CMAKE}" --build . --target ${CMAKE_BUILD_TARGET} ${CMAKE_BUILD_CONFIG} -- ${CMAKE_BUILD_OPTIONS}
+    "${CMAKE}" --build . --target ${MAKE_BUILD_RULE} ${CMAKE_BUILD_CONFIG} -- ${CMAKE_BUILD_OPTIONS}
     local CMAKE_RESULT=$?
     if [ ${CMAKE_RESULT} -ne 0 ] ; then
         stderr_echo "Running CMake failed with return code ${CMAKE_RESULT}!"
@@ -259,27 +273,14 @@ compile_cpp_for_target()
         return 1
     fi
 
-    # only run "make test" if we can actually run it on current host
-    can_run_tests "${TARGET}"
-    local CAN_RUN_TESTS_RESULT=$?
-    if [[ ${MAKE_TARGET} != "clean" && ${CAN_RUN_TESTS_RESULT} == 0 ]] ; then
+    # only run tests if we can actually run it on current host
+    if can_run_tests "${TARGET}" ; then
         CTEST_OUTPUT_ON_FAILURE=1 "${CTEST}" ${CTEST_ARGS[@]}
         local CTEST_RESULT=$?
         if [ ${CTEST_RESULT} -ne 0 ] ; then
             stderr_echo "Tests on target ${TARGET} failed with return code ${CTEST_RESULT}."
             popd > /dev/null
             return 1
-        fi
-
-        if [[ (! -z "${GCOVR_BIN}" && "${TARGET}" == *"gcc"*) ||
-                (! -z "${LLVM_PROFDATA_BIN}" && ! -z "${LLVM_COV_BIN}" && "${TARGET}" == *"clang"*) ]] ; then
-            "${CMAKE}" --build . --target coverage
-            local COVERAGE_RESULT=$?
-            if [ ${COVERAGE_RESULT} -ne 0 ] ; then
-                stderr_echo "Generating of coverage report failed with return code ${COVERAGE_RESULT}."
-                popd > /dev/null
-                return 1
-            fi
         fi
     fi
 
@@ -488,25 +489,4 @@ posix_to_host_path()
     fi
 
     eval ${HOST_PATH_OUT}="'${POSIX_PATH}'"
-}
-
-# Returns executable according to the current host.
-#
-# On Linux the given executable is unchanged, on Windows the executable is appended by extension if it is given
-# without any extension.
-get_executable()
-{
-    exit_if_argc_lt $# 2
-    local EXECUTABLE="$1"; shift
-    local HOST_EXECUTABLE_OUT="$1"; shift
-
-    local HOST_PLATFORM
-    get_host_platform HOST_PLATFORM
-    if [[ "${HOST_PLATFORM}" == "windows"* ]] ; then
-        local HOST_EXECUTABLE="`ls --append-exe "${EXECUTABLE}"`"
-    else
-        local HOST_EXECUTABLE="${EXECUTABLE}"
-    fi
-
-    eval ${HOST_EXECUTABLE_OUT}="'${HOST_EXECUTABLE}'"
 }
