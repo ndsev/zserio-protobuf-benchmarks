@@ -1,0 +1,73 @@
+name: Windows
+
+on:
+  push:
+    branches: [ master, '*-ci' ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build_windows:
+    runs-on: ${{matrix.os}}
+    strategy:
+      matrix:
+        os: ["windows-latest"]
+    env:
+      MINGW64_TOOLCHAIN_ROOT: "/c/ProgramData/chocolatey/lib/mingw/tools/install/mingw64"
+      MSVC_CMAKE_TOOLSET: "v141"
+      CMAKE_EXTRA_ARGS: "-DCMAKE_BUILD_TYPE=Release"
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: Install dependecies
+      run: choco install zip
+      shell: bash
+
+    - name: Install MinGW
+      uses: egor-tensin/setup-mingw@v2
+      with:
+        platform: x64
+        version: 11.3.0
+
+    - name: Install Protobuf for MinGW
+      run: |
+        git clone --branch v3.10.1 https://github.com/protocolbuffers/protobuf.git build/protobuf
+        cd build/protobuf
+        git submodule update --init --recursive
+        mkdir cmake_build
+        cd cmake_build
+        cmake ../cmake -DCMAKE_BUILD_TYPE=Release -Dprotobuf_BUILD_TESTS=OFF \
+              -DCMAKE_TOOLCHAIN_FILE=../../../cmake/toolchain-windows64-mingw.cmake \
+              -G "Eclipse CDT4 - Unix Makefiles"
+        cmake --build . --target install
+        echo "/c/Program Files (x86)/protobuf/bin" >> ${GITHUB_PATH}
+        echo "/c/Program Files (x86)/protobuf/lib" >> ${GITHUB_PATH}
+      shell: bash
+
+    - name: Run benchmarks for MinGW
+      run: scripts/benchmark.sh cpp-windows64-mingw
+      shell: bash
+
+    - name: Install Protobuf for MSVC
+      run: |
+        cd build/protobuf/cmake_build
+        rm -rf *
+        cmake ../cmake -DCMAKE_BUILD_TYPE=Release -Dprotobuf_BUILD_TESTS=OFF \
+              -DCMAKE_TOOLCHAIN_FILE=../../../cmake/toolchain-windows64-msvc.cmake \
+              -G "Visual Studio 17 2022" -A x64 -T v141
+        cmake --build . --config Release --target install
+        echo "${PATH//'/c/Program Files (x86)/protobuf'/'/c/Program Files/protobuf'}" >> ${GITHUB_PATH}
+      shell: bash
+
+    - name: Run benchmarks for MSVC
+      run: scripts/benchmark.sh cpp-windows64-msvc
+      shell: bash
+
+    - name: Archive benchmarks log
+      uses: actions/upload-artifact@v3
+      with:
+        name: benchmark-log-${{matrix.os}}
+        path: build/benchmarks/*.log

@@ -1,0 +1,40 @@
+name: Linux
+
+on:
+  push:
+    branches: [ master, '*-ci' ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build_linux:
+    runs-on: ${{matrix.os}}
+    strategy:
+      matrix:
+        os: ["ubuntu-20.04", "ubuntu-22.04"]
+        include:
+          - os: "ubuntu-20.04"
+            clang-version-suffix: "-11"
+          - os: "ubuntu-22.04"
+            clang-version-suffix: "-14"
+    env:
+      CLANG_VERSION_SUFFIX: "${{matrix.clang-version-suffix}}"
+      CMAKE_BUILD_OPTIONS: "-j2"
+      CMAKE_EXTRA_ARGS: "-DCMAKE_BUILD_TYPE=Release"
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: Install dependencies
+      run: sudo apt-get install cmake g++-multilib protobuf-compiler
+
+    - name: Run benchmarks
+      run: scripts/benchmark.sh cpp-linux64-gcc cpp-linux64-clang
+
+    - name: Archive benchmark log
+      uses: actions/upload-artifact@v3
+      with:
+        name: benchmark-log-${{matrix.os}}
+        path: build/benchmarks/*.log
