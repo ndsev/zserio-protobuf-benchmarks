@@ -92,7 +92,7 @@ int main(int argc, char* argv[])
     ${PACKAGE_NAME}::${ROOT_MESSAGE} message;
 
     auto status = google::protobuf::util::JsonStringToMessage(jsonString.str(), &message);
-    if (status != google::protobuf::util::Status::OK)
+    if (!status.ok())
     {
         std::cerr << "Failed to initialize message with JSON data!" << std::endl;
         std::cerr << status << std::endl;
@@ -196,7 +196,7 @@ cpp_perf_test()
     if [[ ${SWITCH_RUN_ONLY} == 0 ]] ; then
         # generate Protocol Buffers API
         mkdir -p "${OUT_SRC_DIR}/gen"
-        ${PROTOC} --cpp_out="${OUT_SRC_DIR}/gen" --proto_path="${BENCHMARK_DIR}" "${BENCHMARK_PROTO}"
+        "${PROTOC}" --cpp_out="${OUT_SRC_DIR}/gen" --proto_path="${BENCHMARK_DIR}" "${BENCHMARK_PROTO}"
         if [ $? -ne 0 ] ; then
             stderr_echo "Failed to run Protocol Buffers compiler!"
             return 1
@@ -256,13 +256,13 @@ run_benchmark()
             return 1
         fi
 
-        local BLOBS=($(${FIND} "${TEST_OUT_DIR}/cpp" -iname "${PACKAGE_NAME}.blob"))
+        local BLOBS=($("${FIND}" "${TEST_OUT_DIR}/cpp" -iname "${PACKAGE_NAME}.blob"))
         local BLOB=${BLOBS[0]} # all blobs are same
         local ZIP_FILE=${BLOB/%blob/zip}
-        ${ZIP} "${ZIP_FILE}" "${BLOB}" > /dev/null
+        "${ZIP}" "${ZIP_FILE}" "${BLOB}" > /dev/null
         local ZIP_SIZE="$(du --block-size=1000 ${ZIP_FILE} | cut -f1)kB"
 
-        local LOGS=($(${FIND} "${TEST_OUT_DIR}/cpp" -iname "PerformanceTest.log"))
+        local LOGS=($("${FIND}" "${TEST_OUT_DIR}/cpp" -iname "PerformanceTest.log"))
         local TARGET
         for LOG in ${LOGS[@]} ; do
             TARGET="${LOG#"${TEST_OUT_DIR}/cpp/"}"
@@ -314,7 +314,7 @@ run_benchmarks()
 
     local DATASETS
     for BENCHMARK in ${BENCHMARKS[@]} ; do
-        local DATASETS=($(${FIND} "${DATASETS_DIR}/${BENCHMARK%/*}" -iname "*.json" ! -iname "*.schema.*"))
+        local DATASETS=($("${FIND}" "${DATASETS_DIR}/${BENCHMARK%/*}" -iname "*.json" ! -iname "*.schema.*"))
         if [[ ${#DATASETS[@]} == 0 ]] ; then
             stderr_echo "No datasets found for the benchmark '${BENCHMARK}'!"
             return 1
@@ -369,7 +369,7 @@ get_benchmarks()
     done
 
     local BENCHMARKS_ARR=(
-        $(${FIND} "${BENCHMARKS_SRC_DIR}" -mindepth 2 -maxdepth 2 -type f "${FIND_EXPRESSION[@]}" | sort)
+        $("${FIND}" "${BENCHMARKS_SRC_DIR}" -mindepth 2 -maxdepth 2 -type f "${FIND_EXPRESSION[@]}" | sort)
     )
 
     for i in ${!BENCHMARKS_ARR[@]} ; do
@@ -533,7 +533,7 @@ parse_arguments()
     local NUM_CPP_TARGETS=0
     for PARAM in "${PARAM_ARRAY[@]}" ; do
         case "${PARAM}" in
-            "cpp-linux32-"* | "cpp-linux64-"*)
+            "cpp-linux32-"* | "cpp-linux64-"* | "cpp-windows64-"*)
                 eval ${PARAM_CPP_TARGET_ARRAY_OUT}[${NUM_CPP_TARGETS}]="${PARAM#cpp-}"
                 NUM_CPP_TARGETS=$((NUM_CPP_TARGETS + 1))
                 ;;

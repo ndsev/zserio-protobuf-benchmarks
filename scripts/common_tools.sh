@@ -246,6 +246,8 @@ compile_cpp_for_target()
         local CMAKE_GENERATOR="${MSVC_CMAKE_GENERATOR}";
         local CMAKE_ARGS=("${CMAKE_ARGS[@]}" "-A x64" "-T ${MSVC_CMAKE_TOOLSET}")
         local CMAKE_BUILD_CONFIG="--config ${BUILD_TYPE}"
+        local CTEST_ARGS=("${CTEST_ARGS[@]}" "-C ${BUILD_TYPE}")
+        local MAKE_BUILD_RULE="${MAKE_BUILD_RULE}_build"
     else
         local CMAKE_GENERATOR="${MAKE_CMAKE_GENERATOR}"
         local CMAKE_BUILD_CONFIG=""
@@ -256,7 +258,7 @@ compile_cpp_for_target()
     pushd "${BUILD_DIR}" > /dev/null
 
     # generate makefile running cmake
-    "${CMAKE}" ${CMAKE_EXTRA_ARGS} -G "${CMAKE_GENERATOR}" "${CMAKE_ARGS[@]}" "${CMAKELISTS_DIR}"
+    "${CMAKE}" "${CMAKE_EXTRA_ARGS}" -G "${CMAKE_GENERATOR}" "${CMAKE_ARGS[@]}" "${CMAKELISTS_DIR}"
     local CMAKE_RESULT=$?
     if [ ${CMAKE_RESULT} -ne 0 ] ; then
         stderr_echo "Running CMake failed with return code ${CMAKE_RESULT}!"
