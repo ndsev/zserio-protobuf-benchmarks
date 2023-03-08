@@ -277,7 +277,7 @@ compile_cpp_for_target()
 
     # only run tests if we can actually run it on current host
     if can_run_tests "${TARGET}" ; then
-        CTEST_OUTPUT_ON_FAILURE=1 "${CTEST}" ${CTEST_ARGS[@]}
+        CTEST_OUTPUT_ON_FAILURE=1 "${CTEST}" "${CTEST_ARGS[@]}"
         local CTEST_RESULT=$?
         if [ ${CTEST_RESULT} -ne 0 ] ; then
             stderr_echo "Tests on target ${TARGET} failed with return code ${CTEST_RESULT}."

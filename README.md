@@ -54,10 +54,10 @@ size are reported. BLOB size after zip compression is reported as well.
 
 | Benchmark              | Dataset                | Target                 |      Time | Blob Size | Zip Size |
 | ---------------------- | ---------------------- | ---------------------- | --------- | --------- | -------- |
-| [addressbook.zs]       | [addressbook.json]     | C++ (linux64-gcc)      |   1.444ms | 305.838kB |    212kB |
-| [addressbook_align.zs] | [addressbook.json]     | C++ (linux64-gcc)      |   0.802ms | 311.424kB |    169kB |
-| [carsales.zs]          | [carsales.json]        | C++ (linux64-gcc)      |   1.453ms | 280.340kB |    248kB |
-| [carsales_align.zs]    | [carsales.json]        | C++ (linux64-gcc)      |   0.823ms | 295.965kB |    197kB |
+| [addressbook.zs]       | [addressbook.json]     | C++ (linux64-gcc)      |   1.444ms | 305.838kB |    222kB |
+| [addressbook_align.zs] | [addressbook.json]     | C++ (linux64-gcc)      |   0.802ms | 311.424kB |    177kB |
+| [carsales.zs]          | [carsales.json]        | C++ (linux64-gcc)      |   1.453ms | 280.340kB |    259kB |
+| [carsales_align.zs]    | [carsales.json]        | C++ (linux64-gcc)      |   0.823ms | 295.965kB |    205kB |
 
 ### Time Comparison
 

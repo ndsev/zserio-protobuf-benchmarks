@@ -209,7 +209,7 @@ cpp_perf_test()
 
     # compile all and test it
     local CMAKE_ARGS=()
-    local CTEST_ARGS=("-V")
+    local CTEST_ARGS=("--verbose")
     compile_cpp "${PROJECT_ROOT}" "${OUT_DIR}" "${OUT_SRC_DIR}" CPP_TARGETS[@] CMAKE_ARGS[@] CTEST_ARGS[@] "all"
     if [ $? -ne 0 ] ; then
         return 1
@@ -260,6 +260,9 @@ run_benchmark()
         local BLOB=${BLOBS[0]} # all blobs are same
         local ZIP_FILE=${BLOB/%blob/zip}
         "${ZIP}" "${ZIP_FILE}" "${BLOB}" > /dev/null
+        if [ $? -ne 0 ] ; then
+            return 1
+        fi
         local ZIP_SIZE="$(du --block-size=1000 ${ZIP_FILE} | cut -f1)kB"
 
         local LOGS=($("${FIND}" "${TEST_OUT_DIR}/cpp" -iname "PerformanceTest.log"))
@@ -385,7 +388,7 @@ Description:
     Runs performance tests on given zserio sources with zserio release compiled in release-ver directory.
 
 Usage:
-    $0 [-h] [-e] [-p] [-o <dir>] [-d <dir>] [-c <config>] [-i <pattern>]... [-x <pattern>]...
+    $0 [-h] [-e] [-p] [-r] ][-o <dir>] [-d <dir>] [-c <config>] [-i <pattern>]... [-x <pattern>]...
             generator...
 
 Arguments:
