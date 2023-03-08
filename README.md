@@ -1,7 +1,7 @@
 # Protobuf Benchmarks by Zserio
 
-[![](https://github.com/ndsev/zserio-protobuf-benchmarks/actions/workflows/build-linux.yml/badge.svg)](https://github.com/ndsev/zserio-protobuf-benchmarks/actions/workflows/build-linux.yml)
-[![](https://github.com/ndsev/zserio-protobuf-benchmarks/actions/workflows/build-windows.yml/badge.svg)](https://github.com/ndsev/zserio-protobuf-benchmarks/actions/workflows/build-windows.yml)
+[![](https://github.com/ndsev/zserio-protobuf-benchmarks/actions/workflows/build_linux.yml/badge.svg)](https://github.com/ndsev/zserio-protobuf-benchmarks/actions/workflows/build_linux.yml)
+[![](https://github.com/ndsev/zserio-protobuf-benchmarks/actions/workflows/build_windows.yml/badge.svg)](https://github.com/ndsev/zserio-protobuf-benchmarks/actions/workflows/build_windows.yml)
 [![](https://img.shields.io/github/watchers/ndsev/zserio-protobuf-benchmarks.svg)](https://GitHub.com/ndsev/zserio-protobuf-benchmarks/watchers)
 [![](https://img.shields.io/github/forks/ndsev/zserio-protobuf-benchmarks.svg)](https://GitHub.com/ndsev/zserio-protobuf-benchmarks/network/members)
 [![](https://img.shields.io/github/stars/ndsev/zserio-protobuf-benchmarks.svg?color=yellow)](https://GitHub.com/ndsev/zserio-protobuf-benchmarks/stargazers)
