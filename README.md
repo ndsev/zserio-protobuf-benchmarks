@@ -8,10 +8,23 @@
 
 --------
 
-Protobuf Benchmarks by Zserio is an independet benchmark which uses
+Protobuf Benchmarks by Zserio is an independent benchmark which uses
 [zserio-datasets](https://github.com/ndsev/zserio-datasets) to compare Google's
 [Protocol Buffers](https://github.com/protocolbuffers/protobuf) performance to [Zserio](http://zserio.org/)
 on the same sets of data.
+
+## Zserio vs. Protocol Buffers
+
+Google's Protocol Buffers are very popular and in wide-spread use. One of the many questions we always have to
+answer is: "Why don't you use Protobuf? It is already there."
+
+Fact is that it wasn't open sourced when we would have needed it. Maybe we would have used it back then. But
+even today we think we came along with something more tailored to our needs. This is also the reason why we
+open sourced Zserio after such a long time.
+
+So let's see how Zserio performs in comparison to Protobuf. For being fair we have chosen as well the example
+that is used on Google's documentation page of Protobuf (`addressbook`). This example does not really help
+to promote a binary - thus smaller - representation of data. It mostly uses strings.
 
 ## Running
 
