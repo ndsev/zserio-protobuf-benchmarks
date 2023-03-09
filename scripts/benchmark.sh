@@ -257,10 +257,15 @@ run_benchmark()
         fi
 
         local BLOBS=($("${FIND}" "${TEST_OUT_DIR}/cpp" -iname "${PACKAGE_NAME}.blob"))
+        if [ ${#BLOBS[@]} -eq 0 ] ; then
+            stderr_echo "Failed to find blobs created by performance test!"
+            return 1
+        fi
         local BLOB=${BLOBS[0]} # all blobs are same
         local ZIP_FILE=${BLOB/%blob/zip}
         "${ZIP}" "${ZIP_FILE}" "${BLOB}" > /dev/null
         if [ $? -ne 0 ] ; then
+            stderr_echo "Failed to zip blob created by performance test!"
             return 1
         fi
         local ZIP_SIZE="$(du --block-size=1000 ${ZIP_FILE} | cut -f1)kB"
