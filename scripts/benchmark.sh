@@ -272,7 +272,7 @@ run_benchmark()
 
         local LOGS=($("${FIND}" "${TEST_OUT_DIR}/cpp" -iname "PerformanceTest.log"))
         local TARGET
-        for LOG in ${LOGS[@]} ; do
+        for LOG in "${LOGS[@]}" ; do
             TARGET="${LOG#"${TEST_OUT_DIR}/cpp/"}"
             TARGET="C++ (${TARGET%%/*})"
             RESULTS=($(cat ${LOG}))
@@ -321,14 +321,14 @@ run_benchmarks()
     fi
 
     local DATASETS
-    for BENCHMARK in ${BENCHMARKS[@]} ; do
+    for BENCHMARK in "${BENCHMARKS[@]}" ; do
         local DATASETS=($("${FIND}" "${DATASETS_DIR}/${BENCHMARK%/*}" -iname "*.json" ! -iname "*.schema.*"))
         if [[ ${#DATASETS[@]} == 0 ]] ; then
             stderr_echo "No datasets found for the benchmark '${BENCHMARK}'!"
             return 1
         fi
 
-        for DATASET in ${DATASETS[@]} ; do
+        for DATASET in "${DATASETS[@]}" ; do
             run_benchmark "${PROJECT_ROOT}" "${BENCHMARKS_SRC_DIR}" "${BENCHMARKS_OUT_DIR}" "${BENCHMARK}" \
                           "${DATASET}" CPP_TARGETS[@] ${NUM_ITERATIONS} ${SWITCH_RUN_ONLY} ${LOG_FILE}
             if [[ $? -ne 0 ]] ; then

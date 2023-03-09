@@ -258,7 +258,7 @@ compile_cpp_for_target()
     pushd "${BUILD_DIR}" > /dev/null
 
     # generate makefile running cmake
-    "${CMAKE}" "${CMAKE_EXTRA_ARGS}" -G "${CMAKE_GENERATOR}" ${CMAKE_ARGS[@]} "${CMAKELISTS_DIR}"
+    "${CMAKE}" "${CMAKE_EXTRA_ARGS}" -G "${CMAKE_GENERATOR}" "${CMAKE_ARGS[@]}" "${CMAKELISTS_DIR}"
     local CMAKE_RESULT=$?
     if [ ${CMAKE_RESULT} -ne 0 ] ; then
         stderr_echo "Running CMake failed with return code ${CMAKE_RESULT}!"
@@ -312,7 +312,7 @@ run_pylint()
         # prevent bad file number under msys caused by too long command line
         for SOURCE in "${SOURCES[@]}"; do
             python -m pylint --init-hook="import sys; sys.setrecursionlimit(5000)" ${PYLINT_EXTRA_ARGS} \
-                            --rcfile "${PYLINT_RCFILE}" --persistent=n --score=n ${PYLINT_ARGS[@]} \
+                            --rcfile "${PYLINT_RCFILE}" --persistent=n --score=n "${PYLINT_ARGS[@]}" \
                             ${SOURCE}
             local PYLINT_RESULT=$?
             if [ ${PYLINT_RESULT} -ne 0 ] ; then
@@ -322,8 +322,8 @@ run_pylint()
         done
     else
         python -m pylint --init-hook="import sys; sys.setrecursionlimit(5000)" ${PYLINT_EXTRA_ARGS} \
-                         --rcfile "${PYLINT_RCFILE}" --persistent=n --score=n ${PYLINT_ARGS[@]} \
-                         ${SOURCES[@]}
+                         --rcfile "${PYLINT_RCFILE}" --persistent=n --score=n "${PYLINT_ARGS[@]}" \
+                         "${SOURCES[@]}"
         local PYLINT_RESULT=$?
         if [ ${PYLINT_RESULT} -ne 0 ] ; then
             stderr_echo "Running pylint failed with return code ${PYLINT_RESULT}!"
@@ -353,8 +353,8 @@ run_mypy()
     local MYPY_ARGS=("${MSYS_WORKAROUND_TEMP[@]}")
     local SOURCES=("$@")
 
-    python -m mypy ${MYPY_EXTRA_ARGS} ${MYPY_ARGS[@]} --cache-dir="${BUILD_DIR}/.mypy_cache" \
-            --config-file "${MYPY_CONFIG_FILE}" ${SOURCES[@]}
+    python -m mypy ${MYPY_EXTRA_ARGS} "${MYPY_ARGS[@]}" --cache-dir="${BUILD_DIR}/.mypy_cache" \
+            --config-file "${MYPY_CONFIG_FILE}" "${SOURCES[@]}"
     local MYPY_RESULT=$?
     if [ ${MYPY_RESULT} -ne 0 ] ; then
         stderr_echo "Running mypy failed with return code ${MYPY_RESULT}!"
