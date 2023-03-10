@@ -246,7 +246,7 @@ compile_cpp_for_target()
         local CMAKE_GENERATOR="${MSVC_CMAKE_GENERATOR}";
         local CMAKE_ARGS=("${CMAKE_ARGS[@]}" "-A x64" "-T ${MSVC_CMAKE_TOOLSET}")
         local CMAKE_BUILD_CONFIG="--config ${BUILD_TYPE}"
-        local CTEST_ARGS=("${CTEST_ARGS[@]}" "-C ${BUILD_TYPE}")
+        local CTEST_ARGS=("${CTEST_ARGS[@]}" "--build-config" "${BUILD_TYPE}")
         local MAKE_BUILD_RULE="${MAKE_BUILD_RULE}_build"
     else
         local CMAKE_GENERATOR="${MAKE_CMAKE_GENERATOR}"
@@ -277,7 +277,7 @@ compile_cpp_for_target()
 
     # only run tests if we can actually run it on current host
     if can_run_tests "${TARGET}" ; then
-        CTEST_OUTPUT_ON_FAILURE=1 "${CTEST}" ${CTEST_ARGS[@]}
+        CTEST_OUTPUT_ON_FAILURE=1 "${CTEST}" "${CTEST_ARGS[@]}"
         local CTEST_RESULT=$?
         if [ ${CTEST_RESULT} -ne 0 ] ; then
             stderr_echo "Tests on target ${TARGET} failed with return code ${CTEST_RESULT}."
