@@ -28,7 +28,16 @@ to promote a binary - thus smaller - representation of data. It mostly uses stri
 
 ## Running
 
-Running can be done by provided `benchmark.sh` script which accepts as a parameter required platform
+Make sure you have the following pre-requisites installed:
+
+- Protocol Buffers Compiler
+- CMake
+- ZIP utility
+- Supported Compiler (gcc, clang, mingw, msvc)
+
+Also do not forget to fetch the datasets with `git submodule update --init`.
+
+Now you are ready to run the `benchmark.sh` script which accepts the required platform as a parameter 
 (e.g. `cpp-linux64-gcc`):
 
 ```
