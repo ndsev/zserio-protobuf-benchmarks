@@ -1,0 +1,536 @@
+syntax = "proto2";
+
+package apollo;
+
+message Map {
+  optional Header header = 1;
+
+  repeated Crosswalk crosswalk = 2;
+  repeated Junction junction = 3;
+  repeated Lane lane = 4;
+  repeated StopSign stop_sign = 5;
+  repeated Signal signal = 6;
+  repeated YieldSign yield = 7;
+  repeated Overlap overlap = 8;
+  repeated ClearArea clear_area = 9;
+  repeated SpeedBump speed_bump = 10;
+  repeated Road road = 11;
+  repeated ParkingSpace parking_space = 12;
+  repeated PNCJunction pnc_junction = 13;
+  repeated RSU rsu = 14;
+}
+
+// This message defines how we project the ellipsoidal Earth surface to a plane.
+message Projection {
+  // PROJ.4 setting:
+  // "+proj=tmerc +lat_0={origin.lat} +lon_0={origin.lon} +k={scale_factor}
+  // +ellps=WGS84 +no_defs"
+  optional string proj = 1;
+}
+
+message Header {
+  optional bytes version = 1;
+  optional bytes date = 2;
+  optional Projection projection = 3;
+  optional bytes district = 4;
+  optional bytes generation = 5;
+  optional bytes rev_major = 6;
+  optional bytes rev_minor = 7;
+  optional double left = 8;
+  optional double top = 9;
+  optional double right = 10;
+  optional double bottom = 11;
+  optional bytes vendor = 12;
+}
+
+// A clear area means in which stopping car is prohibited
+
+message ClearArea {
+  optional Id id = 1;
+  repeated Id overlap_id = 2;
+  optional Polygon polygon = 3;
+}
+
+// Crosswalk is a place designated for pedestrians to cross a road.
+message Crosswalk {
+  optional Id id = 1;
+
+  optional Polygon polygon = 2;
+
+  repeated Id overlap_id = 3;
+}
+
+// Polygon, not necessary convex.
+message Polygon {
+  repeated PointENU point = 1;
+}
+
+// Straight line segment.
+message LineSegment {
+  repeated PointENU point = 1;
+}
+
+// Generalization of a line.
+message CurveSegment {
+  oneof curve_type {
+    LineSegment line_segment = 1;
+  }
+  optional double s = 6;  // start position (s-coordinate)
+  optional PointENU start_position = 7;
+  optional double heading = 8;  // start orientation
+  optional double length = 9;
+}
+
+// An object similar to a line but that need not be straight.
+message Curve {
+  repeated CurveSegment segment = 1;
+}
+
+// A point in the map reference frame. The map defines an origin, whose
+// coordinate is (0, 0, 0).
+// Most modules, including localization, perception, and prediction, generate
+// results based on the map reference frame.
+// Currently, the map uses Universal Transverse Mercator (UTM) projection. See
+// the link below for the definition of map origin.
+//   https://en.wikipedia.org/wiki/Universal_Transverse_Mercator_coordinate_system
+// The z field of PointENU can be omitted. If so, it is a 2D location and we do
+// not care its height.
+message PointENU {
+  optional double x = 1 [default = nan];  // East from the origin, in meters.
+  optional double y = 2 [default = nan];  // North from the origin, in meters.
+  optional double z = 3 [default = 0.0];  // Up from the WGS-84 ellipsoid, in
+                                          // meters.
+}
+
+// A point in the global reference frame. Similar to PointENU, PointLLH allows
+// omitting the height field for representing a 2D location.
+message PointLLH {
+  // Longitude in degrees, ranging from -180 to 180.
+  optional double lon = 1 [default = nan];
+  // Latitude in degrees, ranging from -90 to 90.
+  optional double lat = 2 [default = nan];
+  // WGS-84 ellipsoid height in meters.
+  optional double height = 3 [default = 0.0];
+}
+
+// A general 2D point. Its meaning and units depend on context, and must be
+// explained in comments.
+message Point2D {
+  optional double x = 1 [default = nan];
+  optional double y = 2 [default = nan];
+}
+
+// A general 3D point. Its meaning and units depend on context, and must be
+// explained in comments.
+message Point3D {
+  optional double x = 1 [default = nan];
+  optional double y = 2 [default = nan];
+  optional double z = 3 [default = nan];
+}
+
+// A unit quaternion that represents a spatial rotation. See the link below for
+// details.
+//   https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation
+// The scalar part qw can be omitted. In this case, qw should be calculated by
+//   qw = sqrt(1 - qx * qx - qy * qy - qz * qz).
+message Quaternion {
+  optional double qx = 1 [default = nan];
+  optional double qy = 2 [default = nan];
+  optional double qz = 3 [default = nan];
+  optional double qw = 4 [default = nan];
+}
+
+// Global unique ids for all objects (include lanes, junctions, overlaps, etc).
+message Id {
+  optional string id = 1;
+}
+
+// A junction is the junction at-grade of two or more roads crossing.
+message Junction {
+  optional Id id = 1;
+
+  optional Polygon polygon = 2;
+
+  repeated Id overlap_id = 3;
+  enum Type {
+    UNKNOWN = 0;
+    IN_ROAD = 1;
+    CROSS_ROAD = 2;
+    FORK_ROAD = 3;
+    MAIN_SIDE = 4;
+    DEAD_END = 5;
+  };
+  optional Type type = 4;
+}
+
+message LaneBoundaryType {
+  enum Type {
+    UNKNOWN = 0;
+    DOTTED_YELLOW = 1;
+    DOTTED_WHITE = 2;
+    SOLID_YELLOW = 3;
+    SOLID_WHITE = 4;
+    DOUBLE_YELLOW = 5;
+    CURB = 6;
+  };
+  // Offset relative to the starting point of boundary
+  optional double s = 1;
+  // support multiple types
+  repeated Type types = 2;
+}
+
+message LaneBoundary {
+  optional Curve curve = 1;
+
+  optional double length = 2;
+  // indicate whether the lane boundary exists in real world
+  optional bool virtual = 3;
+  // in ascending order of s
+  repeated LaneBoundaryType boundary_type = 4;
+}
+
+// Association between central point to closest boundary.
+message LaneSampleAssociation {
+  optional double s = 1;
+  optional double width = 2;
+}
+
+// A lane is part of a roadway, that is designated for use by a single line of
+// vehicles.
+// Most public roads (include highways) have more than two lanes.
+message Lane {
+  optional Id id = 1;
+
+  // Central lane as reference trajectory, not necessary to be the geometry
+  // central.
+  optional Curve central_curve = 2;
+
+  // Lane boundary curve.
+  optional LaneBoundary left_boundary = 3;
+  optional LaneBoundary right_boundary = 4;
+
+  // in meters.
+  optional double length = 5;
+
+  // Speed limit of the lane, in meters per second.
+  optional double speed_limit = 6;
+
+  repeated Id overlap_id = 7;
+
+  // All lanes can be driving into (or from).
+  repeated Id predecessor_id = 8;
+  repeated Id successor_id = 9;
+
+  // Neighbor lanes on the same direction.
+  repeated Id left_neighbor_forward_lane_id = 10;
+  repeated Id right_neighbor_forward_lane_id = 11;
+
+  enum LaneType {
+    NONE = 1;
+    CITY_DRIVING = 2;
+    BIKING = 3;
+    SIDEWALK = 4;
+    PARKING = 5;
+    SHOULDER = 6;
+  };
+  optional LaneType type = 12;
+
+  enum LaneTurn {
+    NO_TURN = 1;
+    LEFT_TURN = 2;
+    RIGHT_TURN = 3;
+    U_TURN = 4;
+  };
+  optional LaneTurn turn = 13;
+
+  repeated Id left_neighbor_reverse_lane_id = 14;
+  repeated Id right_neighbor_reverse_lane_id = 15;
+
+  optional Id junction_id = 16;
+
+  // Association between central point to closest boundary.
+  repeated LaneSampleAssociation left_sample = 17;
+  repeated LaneSampleAssociation right_sample = 18;
+
+  enum LaneDirection {
+    FORWARD = 1;
+    BACKWARD = 2;
+    BIDIRECTION = 3;
+  }
+  optional LaneDirection direction = 19;
+
+  // Association between central point to closest road boundary.
+  repeated LaneSampleAssociation left_road_sample = 20;
+  repeated LaneSampleAssociation right_road_sample = 21;
+
+  repeated Id self_reverse_lane_id = 22;
+}
+
+message LaneOverlapInfo {
+  optional double start_s = 1;  // position (s-coordinate)
+  optional double end_s = 2;    // position (s-coordinate)
+  optional bool is_merge = 3;
+
+  optional Id region_overlap_id = 4;
+}
+
+message SignalOverlapInfo {}
+
+message StopSignOverlapInfo {}
+
+message CrosswalkOverlapInfo {
+  optional Id region_overlap_id = 1;
+}
+
+message JunctionOverlapInfo {}
+
+message YieldOverlapInfo {}
+
+message ClearAreaOverlapInfo {}
+
+message SpeedBumpOverlapInfo {}
+
+message ParkingSpaceOverlapInfo {}
+
+message PNCJunctionOverlapInfo {}
+
+message RSUOverlapInfo {}
+
+message RegionOverlapInfo {
+  optional Id id = 1;
+  repeated Polygon polygon = 2;
+}
+
+// Information about one object in the overlap.
+message ObjectOverlapInfo {
+  optional Id id = 1;
+
+  oneof overlap_info {
+    LaneOverlapInfo lane_overlap_info = 3;
+    SignalOverlapInfo signal_overlap_info = 4;
+    StopSignOverlapInfo stop_sign_overlap_info = 5;
+    CrosswalkOverlapInfo crosswalk_overlap_info = 6;
+    JunctionOverlapInfo junction_overlap_info = 7;
+    YieldOverlapInfo yield_sign_overlap_info = 8;
+    ClearAreaOverlapInfo clear_area_overlap_info = 9;
+    SpeedBumpOverlapInfo speed_bump_overlap_info = 10;
+    ParkingSpaceOverlapInfo parking_space_overlap_info = 11;
+    PNCJunctionOverlapInfo pnc_junction_overlap_info = 12;
+    RSUOverlapInfo rsu_overlap_info = 13;
+  }
+}
+
+// Here, the "overlap" includes any pair of objects on the map
+// (e.g. lanes, junctions, and crosswalks).
+message Overlap {
+  optional Id id = 1;
+
+  // Information about one overlap, include all overlapped objects.
+  repeated ObjectOverlapInfo object = 2;
+
+  repeated RegionOverlapInfo region_overlap = 3;
+}
+
+// ParkingSpace is a place designated to park a car.
+message ParkingSpace {
+  optional Id id = 1;
+
+  optional Polygon polygon = 2;
+
+  repeated Id overlap_id = 3;
+
+  optional double heading = 4;
+}
+
+// ParkingLot is a place for parking cars.
+message ParkingLot {
+  optional Id id = 1;
+
+  optional Polygon polygon = 2;
+
+  repeated Id overlap_id = 3;
+}
+
+message Passage {
+  optional Id id = 1;
+
+  repeated Id signal_id = 2;
+  repeated Id yield_id = 3;
+  repeated Id stop_sign_id = 4;
+  repeated Id lane_id = 5;
+
+  enum Type {
+    UNKNOWN = 0;
+    ENTRANCE = 1;
+    EXIT = 2;
+  };
+  optional Type type = 6;
+};
+
+message PassageGroup {
+  optional Id id = 1;
+
+  repeated Passage passage = 2;
+};
+
+message PNCJunction {
+  optional Id id = 1;
+
+  optional Polygon polygon = 2;
+
+  repeated Id overlap_id = 3;
+
+  repeated PassageGroup passage_group = 4;
+}
+
+message BoundaryEdge {
+  optional Curve curve = 1;
+  enum Type {
+    UNKNOWN = 0;
+    NORMAL = 1;
+    LEFT_BOUNDARY = 2;
+    RIGHT_BOUNDARY = 3;
+  };
+  optional Type type = 2;
+}
+
+message BoundaryPolygon {
+  repeated BoundaryEdge edge = 1;
+}
+
+// boundary with holes
+message RoadBoundary {
+  optional BoundaryPolygon outer_polygon = 1;
+  // if boundary without hole, hole is null
+  repeated BoundaryPolygon hole = 2;
+}
+
+message RoadROIBoundary {
+  optional Id id = 1;
+  repeated RoadBoundary road_boundaries = 2;
+}
+
+// road section defines a road cross-section, At least one section must be
+// defined in order to
+// use a road, If multiple road sections are defined, they must be listed in
+// order along the road
+message RoadSection {
+  optional Id id = 1;
+  // lanes contained in this section
+  repeated Id lane_id = 2;
+  // boundary of section
+  optional RoadBoundary boundary = 3;
+}
+
+// The road is a collection of traffic elements, such as lanes, road boundary
+// etc.
+// It provides general information about the road.
+message Road {
+  optional Id id = 1;
+  repeated RoadSection section = 2;
+
+  // if lane road not in the junction, junction id is null.
+  optional Id junction_id = 3;
+
+  enum Type {
+    UNKNOWN = 0;
+    HIGHWAY = 1;
+    CITY_ROAD = 2;
+    PARK = 3;
+  };
+  optional Type type = 4;
+}
+
+message RSU {
+  optional Id id = 1;
+  optional Id junction_id = 2;
+  repeated Id overlap_id = 3;
+};
+
+message Subsignal {
+  enum Type {
+    UNKNOWN = 1;
+    CIRCLE = 2;
+    ARROW_LEFT = 3;
+    ARROW_FORWARD = 4;
+    ARROW_RIGHT = 5;
+    ARROW_LEFT_AND_FORWARD = 6;
+    ARROW_RIGHT_AND_FORWARD = 7;
+    ARROW_U_TURN = 8;
+  };
+
+  optional Id id = 1;
+  optional Type type = 2;
+
+  // Location of the center of the bulb. now no data support.
+  optional PointENU location = 3;
+}
+
+message SignInfo {
+  enum Type {
+    None = 0;
+    NO_RIGHT_TURN_ON_RED = 1;
+  };
+
+  optional Type type = 1;
+}
+
+message Signal {
+  enum Type {
+    UNKNOWN = 1;
+    MIX_2_HORIZONTAL = 2;
+    MIX_2_VERTICAL = 3;
+    MIX_3_HORIZONTAL = 4;
+    MIX_3_VERTICAL = 5;
+    SINGLE = 6;
+  };
+
+  optional Id id = 1;
+  optional Polygon boundary = 2;
+  repeated Subsignal subsignal = 3;
+  // TODO: add orientation. now no data support.
+  repeated Id overlap_id = 4;
+  optional Type type = 5;
+  // stop line
+  repeated Curve stop_line = 6;
+
+  repeated SignInfo sign_info = 7;
+}
+
+message SpeedBump {
+  optional Id id = 1;
+  repeated Id overlap_id = 2;
+  repeated Curve position = 3;
+}
+
+// A stop sign is a traffic sign to notify drivers that they must stop before
+// proceeding.
+message StopSign {
+  optional Id id = 1;
+
+  repeated Curve stop_line = 2;
+
+  repeated Id overlap_id = 3;
+
+  enum StopType {
+    UNKNOWN = 0;
+    ONE_WAY = 1;
+    TWO_WAY = 2;
+    THREE_WAY = 3;
+    FOUR_WAY = 4;
+    ALL_WAY = 5;
+  };
+  optional StopType type = 4;
+}
+
+// A yield indicates that each driver must prepare to stop if necessary to let a
+// driver on another approach proceed.
+// A driver who stops or slows down to let another vehicle through has yielded
+// the right of way to that vehicle.
+message YieldSign {
+  optional Id id = 1;
+
+  repeated Curve stop_line = 2;
+
+  repeated Id overlap_id = 3;
+}

@@ -321,8 +321,10 @@ run_benchmarks()
     fi
 
     local DATASETS
+    local DATASET_FILTER="! -iname *.schema.json ! -iname *.zs.json"
     for BENCHMARK in "${BENCHMARKS[@]}" ; do
-        local DATASETS=($("${FIND}" "${DATASETS_DIR}/${BENCHMARK%/*}" -iname "*.json" ! -iname "*.schema.*"))
+
+        local DATASETS=($("${FIND}" "${DATASETS_DIR}/${BENCHMARK%/*}" -iname "*.json" ${DATASET_FILTER}))
         if [[ ${#DATASETS[@]} == 0 ]] ; then
             stderr_echo "No datasets found for the benchmark '${BENCHMARK}'!"
             return 1
