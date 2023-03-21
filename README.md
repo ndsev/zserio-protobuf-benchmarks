@@ -100,7 +100,78 @@ size are reported. BLOB size after zip compression is reported as well.
 
 ![size comparison](images/ZserioProtobufSizeComparison.png)
 
-### How to Add New Benchmark
+## Why Is Zserio More Compact Than Protobuf?
+
+To be fair, it is necessary to note that Protobuf encodes more information which are used
+for compatibility of encoder/decoder when proto file is changed:
+
+- Protobuf encodes each field ID (i.e. the = 1, = 2 in the following messages example), to preserve
+  compatibility when adding new fields or reordering them in messages:
+
+  ```
+  message Road
+  {
+    int32 id = 1;
+    string name = 2;
+  }
+  ```
+
+  These IDs have an encoding cost, which zserio does not pay. In zserio, it would merely be:
+
+  ```
+  struct Road
+  {
+    int32 id;
+    string name;
+  };
+  ```
+- Protobuf always encodes the field size, so that old decoders can skip field IDs which they do not know about.
+  This is useful for forward/backward compatibility. This has a cost which zserio does not pay.
+
+On another hand, zserio encoder uses better compactness:
+
+- Zserio can have fields of arbitrary bit size, non-byte aligned, unlike protobuf which has fewer possible
+  types, all byte aligned. And structures (messages) are not byte aligned in general (although explicit
+  alignment is possible e.g. `align(8)`)
+- Zserio has constraint expressions to indicate whether a field is encoded or not based on previously decoded
+  information. The constraint expression has zero cost in encoding size since it's only present in the generated
+  encoding/decoded code. In the following example, the box field is only encoded iff and expression following it
+  is true, based on previously decoded info, which helps being compact:
+
+  ```
+  struct Foo
+  {
+    int8 type;
+    BoundingBox box if type == 1;
+  };
+  ```
+
+  The encoding size of such structure in zserio would be only 1 byte (which may not be byte aligned) for the
+  type field.
+- Arrays in zserio do not need to encode the size of the array. It's known in the generated encoding/decoding
+  code, even for arrays of variable size as in the following example. When size is zero in particular, the array
+  has zero encoding cost:
+
+  ```
+  struct Foo
+  {
+    int8 num_items;
+    Items list[num_items];
+  };
+  ```
+
+  In protobuf, this would be a repeated field, but the repeated field always has an encoding cost to encode its
+  length as for every other fields in protobuf, to be able to skip it:
+
+  ```
+  message Foo
+  {
+    int8 num_items = 1;
+    repeated Items list = 2;
+  }
+  ```
+
+## How to Add New Benchmark
 
 - Add new dataset (e.g. `new_benchmark`) in JSON format
   into [datasets repository](https://github.com/ndsev/zserio-datasets)
