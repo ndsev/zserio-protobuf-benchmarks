@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package simpletrace;
+
+message SimpleTrace {
+  repeated Point trace = 1;
+}
+
+message Point {
+  int32 longitude = 1;
+  int32 latitude = 2;
+}

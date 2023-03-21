@@ -57,29 +57,40 @@ size are reported. BLOB size after zip compression is reported as well.
 ### Protobuf 3.21.12
 
 [addressbook.proto]: https://github.com/ndsev/zserio-protobuf-benchmarks/blob/master/benchmarks/addressbook/addressbook.proto
+[apollo.proto]: https://github.com/ndsev/zserio-protobuf-benchmarks/blob/master/benchmarks/apollo/apollo.proto
 [carsales.proto]: https://github.com/ndsev/zserio-protobuf-benchmarks/blob/master/benchmarks/carsales/carsales.proto
+[simpletrace.proto]: https://github.com/ndsev/zserio-protobuf-benchmarks/blob/master/benchmarks/simpletrace/simpletrace.proto
 
 [addressbook.json]: https://github.com/ndsev/zserio-datasets/blob/master/addressbook/addressbook.json
+[apollo.proto.json]: https://github.com/ndsev/zserio-datasets/blob/master/apollo/apollo.proto.json
 [carsales.json]: https://github.com/ndsev/zserio-datasets/blob/master/carsales/carsales.json
+[prague-groebenzell.json]: https://github.com/ndsev/zserio-datasets/blob/master/simpletrace/prague-groebenzell.json
 
-| Benchmark              | Dataset                | Target                 |      Time | Blob Size | Zip Size |
-| ---------------------- | ---------------------- | ---------------------- | --------- | --------- | -------- |
-| [addressbook.proto]    | [addressbook.json]     | C++ (linux64-gcc)      |   1.757ms | 356.292kB |    193kB |
-| [carsales.proto]       | [carsales.json]        | C++ (linux64-gcc)      |   2.033ms | 399.779kB |    242kB |
+| Benchmark            | Dataset                   | Target               |      Time | Blob Size | Zip Size |
+| -------------------- | ------------------------- | -------------------- | --------- | --------- | -------- |
+| [addressbook.proto]  | [addressbook.json]        | C++ (linux64-gcc)    |   1.731ms | 356.292kB |    193kB |
+| [apollo.proto]       | [apollo.proto.json]       | C++ (linux64-gcc)    |   0.641ms | 286.863kB |    136kB |
+| [carsales.proto]     | [carsales.json]           | C++ (linux64-gcc)    |   2.053ms | 399.779kB |    242kB |
+| [simpletrace.proto]  | [prague-groebenzell.json] | C++ (linux64-gcc)    |   0.386ms | 113.152kB |     54kB |
 
 ### Zserio 2.10
 
 [addressbook.zs]: https://github.com/ndsev/zserio/blob/master/benchmarks/addressbook/addressbook.zs
 [addressbook_align.zs]: https://github.com/ndsev/zserio/blob/master/benchmarks/addressbook/addressbook_align.zs
+[apollo.zs]: https://github.com/ndsev/zserio/blob/master/benchmarks/apollo/apollo.zs
+[apollo.zs.json]: https://github.com/ndsev/zserio-datasets/blob/master/apollo/apollo.zs.json
 [carsales.zs]: https://github.com/ndsev/zserio/blob/master/benchmarks/carsales/carsales.zs
 [carsales_align.zs]: https://github.com/ndsev/zserio/blob/master/benchmarks/carsales/carsales_align.zs
+[simpletrace.zs]: https://github.com/ndsev/zserio/blob/master/benchmarks/simpletrace/simpletrace.zs
 
-| Benchmark              | Dataset                | Target                 |      Time | Blob Size | Zip Size |
-| ---------------------- | ---------------------- | ---------------------- | --------- | --------- | -------- |
-| [addressbook.zs]       | [addressbook.json]     | C++ (linux64-gcc)      |   1.444ms | 305.838kB |    222kB |
-| [addressbook_align.zs] | [addressbook.json]     | C++ (linux64-gcc)      |   0.802ms | 311.424kB |    177kB |
-| [carsales.zs]          | [carsales.json]        | C++ (linux64-gcc)      |   1.453ms | 280.340kB |    259kB |
-| [carsales_align.zs]    | [carsales.json]        | C++ (linux64-gcc)      |   0.823ms | 295.965kB |    205kB |
+| Benchmark              | Dataset                   | Target              |      Time | Blob Size | Zip Size |
+| ---------------------- | ------------------------- | ------------------- | --------- | --------- | -------- |
+| [addressbook.zs]       | [addressbook.json]        | C++ (linux64-gcc)   |   1.478ms | 305.838kB |    222kB |
+| [addressbook_align.zs] | [addressbook.json]        | C++ (linux64-gcc)   |   0.844ms | 311.424kB |    177kB |
+| [apollo.zs]            | [apollo.zs.json]          | C++ (linux64-gcc)   |   0.244ms | 226.507kB |    144kB |
+| [carsales.zs]          | [carsales.json]           | C++ (linux64-gcc)   |   1.374ms | 280.340kB |    259kB |
+| [carsales_align.zs]    | [carsales.json]           | C++ (linux64-gcc)   |   0.925ms | 295.965kB |    205kB |
+| [simpletrace.zs]       | [prague-groebenzell.json] | C++ (linux64-gcc)   |   0.221ms |  87.042kB |     66kB |
 
 ### Time Comparison
 
