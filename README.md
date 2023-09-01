@@ -9,7 +9,7 @@
 --------
 
 Protobuf Benchmarks by Zserio is an independent benchmark which uses
-[zserio-datasets](https://github.com/ndsev/zserio-datasets) to compare Google's
+[zserio-benchmarks-datasets](https://github.com/ndsev/zserio-benchmarks-datasets) to compare Google's
 [Protocol Buffers](https://github.com/protocolbuffers/protobuf) performance to [Zserio](http://zserio.org/)
 on the same sets of data.
 
@@ -37,7 +37,7 @@ Make sure you have the following pre-requisites installed:
 
 Also do not forget to fetch the datasets with `git submodule update --init`.
 
-Now you are ready to run the `benchmark.sh` script which accepts the required platform as a parameter 
+Now you are ready to run the `benchmark.sh` script which accepts the required platform as a parameter
 (e.g. `cpp-linux64-gcc`):
 
 ```
@@ -61,10 +61,10 @@ size are reported. BLOB size after zip compression is reported as well.
 [carsales.proto]: https://github.com/ndsev/zserio-protobuf-benchmarks/blob/master/benchmarks/carsales/carsales.proto
 [simpletrace.proto]: https://github.com/ndsev/zserio-protobuf-benchmarks/blob/master/benchmarks/simpletrace/simpletrace.proto
 
-[addressbook.json]: https://github.com/ndsev/zserio-datasets/blob/master/addressbook/addressbook.json
-[apollo.proto.json]: https://github.com/ndsev/zserio-datasets/blob/master/apollo/apollo.proto.json
-[carsales.json]: https://github.com/ndsev/zserio-datasets/blob/master/carsales/carsales.json
-[prague-groebenzell.json]: https://github.com/ndsev/zserio-datasets/blob/master/simpletrace/prague-groebenzell.json
+[addressbook.json]: https://github.com/ndsev/zserio-benchmarks-datasets/blob/master/addressbook/addressbook.json
+[apollo.proto.json]: https://github.com/ndsev/zserio-benchmarks-datasets/blob/master/apollo/apollo.proto.json
+[carsales.json]: https://github.com/ndsev/zserio-benchmarks-datasets/blob/master/carsales/carsales.json
+[prague-groebenzell.json]: https://github.com/ndsev/zserio-benchmarks-datasets/blob/master/simpletrace/prague-groebenzell.json
 
 | Benchmark            | Dataset                   | Target               |      Time | Blob Size | Zip Size |
 | -------------------- | ------------------------- | -------------------- | --------- | --------- | -------- |
@@ -78,7 +78,7 @@ size are reported. BLOB size after zip compression is reported as well.
 [addressbook.zs]: https://github.com/ndsev/zserio/blob/master/benchmarks/addressbook/addressbook.zs
 [addressbook_align.zs]: https://github.com/ndsev/zserio/blob/master/benchmarks/addressbook/addressbook_align.zs
 [apollo.zs]: https://github.com/ndsev/zserio/blob/master/benchmarks/apollo/apollo.zs
-[apollo.zs.json]: https://github.com/ndsev/zserio-datasets/blob/master/apollo/apollo.zs.json
+[apollo.zs.json]: https://github.com/ndsev/zserio-benchmarks-datasets/blob/master/apollo/apollo.zs.json
 [carsales.zs]: https://github.com/ndsev/zserio/blob/master/benchmarks/carsales/carsales.zs
 [carsales_align.zs]: https://github.com/ndsev/zserio/blob/master/benchmarks/carsales/carsales_align.zs
 [simpletrace.zs]: https://github.com/ndsev/zserio/blob/master/benchmarks/simpletrace/simpletrace.zs
@@ -174,7 +174,7 @@ On another hand, zserio encoder uses better compactness:
 ## How to Add New Benchmark
 
 - Add new dataset (e.g. `new_benchmark`) in JSON format
-  into [datasets repository](https://github.com/ndsev/zserio-datasets)
+  into [datasets repository](https://github.com/ndsev/zserio-benchmarks-datasets)
 - Add new schema (e.g. `new_benchmark`) in Protobuf format into
   [benchmarks directory](https://github.com/ndsev/zserio-protobuf-benchmarks/tree/master/benchmarks)
 - Make sure that the first message in the schema file is the top level message

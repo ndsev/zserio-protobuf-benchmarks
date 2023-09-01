@@ -1,4 +1,4 @@
 [submodule "datasets"]
 	path = datasets
-	url = https://github.com/ndsev/zserio-datasets.git
+	url = https://github.com/ndsev/zserio-benchmarks-datasets.git
 	branch = master
