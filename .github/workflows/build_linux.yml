@@ -5,6 +5,7 @@ on:
     branches: [ master, '*-ci' ]
   pull_request:
     branches: [ master ]
+  workflow_dispatch:
 
 jobs:
   build_linux:
@@ -28,7 +29,9 @@ jobs:
         submodules: recursive
 
     - name: Install dependencies
-      run: sudo apt-get install cmake g++-multilib protobuf-compiler
+      run: |
+        sudo apt-get update
+        sudo apt-get install cmake g++-multilib protobuf-compiler
 
     - name: Run benchmarks
       run: scripts/benchmark.sh cpp-linux64-gcc cpp-linux64-clang
