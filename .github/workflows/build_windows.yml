@@ -16,7 +16,7 @@ jobs:
       matrix:
         os: ["windows-latest"]
     env:
-      MINGW64_TOOLCHAIN_ROOT: "/c/ProgramData/chocolatey/lib/mingw/tools/install/mingw64"
+      MINGW64_TOOLCHAIN_ROOT: "/c/ProgramData/mingw64/mingw64"
       MSVC_CMAKE_TOOLSET: "v141"
       CMAKE_EXTRA_ARGS: "-DCMAKE_BUILD_TYPE=Release"
     steps:
@@ -26,14 +26,10 @@ jobs:
         submodules: recursive
 
     - name: Install dependecies
-      run: choco install zip
+      run: |
+        choco install zip
+        choco install mingw
       shell: bash
-
-    - name: Install MinGW
-      uses: egor-tensin/setup-mingw@v2
-      with:
-        platform: x64
-        version: 11.3.0
 
     - name: Install Protobuf for MinGW
       run: |
